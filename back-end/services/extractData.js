@@ -3,10 +3,11 @@ class Extractdata {
         this.orderedData = body
     }
     static CompanySignUp = (body) => {
+        console.log(body)
         const data = {
             position: body.position,
             company_name: body.businessName,
-            company_logo: body.businessLogo,
+            company_logo: body.file,
             business_webpage: body.businessWebpage,
             business_mobile_number: body.mobileNumber,
             business_address: body.address,

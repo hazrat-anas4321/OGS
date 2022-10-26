@@ -9,14 +9,14 @@ import multer from 'multer'
 import path from 'path'
 // const User = require('../models/Users')
 const registercontroller = async (req, res, next) => {
-
     // extract error from validation schema
     try {
         let orderedData;
+        console.log(req.file)
         const { registerType = 'recruiter' } = req.body
         if (registerType == 'recruiter') {
             // order the requested data according to database
-            orderedData = Extractdata.CompanySignUp(req.body)
+            orderedData = Extractdata.CompanySignUp({ ...req.body, file: req.file.path })
             if (VALID_MODE == true)
                 var { error } = JoiValidation.signupRecruiter(orderedData.orderedData)
         }
