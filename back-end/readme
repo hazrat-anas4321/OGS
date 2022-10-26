@@ -1,0 +1,19 @@
+relations
+employer type has many employers
+one seek type has many seekers
+so user type has many user accounts
+OR
+User account belongs to one user type3
+
+Business type [IT] has one or many companies [jataq1, jataq2]
+
+jataq associated with business stream
+/register api
+first check status of the user type
+usertype.find(res=>{
+create a user with name, eamil, password,type,position
+
+then create a company with this id
+user.createCompany
+then find  buisness_type
+})
