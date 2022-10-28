@@ -12,35 +12,52 @@ const registercontroller = async (req, res, next) => {
     // extract error from validation schema
     try {
         let orderedData;
-        console.log(req.file)
-        const { registerType = 'recruiter' } = req.body
+        const body = req.body
+        const { registerType = 'seeker' } = req.body
         if (registerType == 'recruiter') {
             // order the requested data according to database
-            orderedData = Extractdata.CompanySignUp({ ...req.body, file: req.file.path })
-            if (VALID_MODE == true)
+            orderedData = Extractdata.EmployerSignUp({ ...req.body, file: req.file?.path })
+            // Perform Validations
+            if (VALID_MODE == 'true') {
+                console.log(orderedData.orderedData)
+                // perform validations
                 var { error } = JoiValidation.signupRecruiter(orderedData.orderedData)
+            }
+            else {
+                // dont perform validations
+                error = null
+            }
         }
         else {
-            if (VALID_MODE == true)
-                var { error } = JoiValidation.signupSeeker(req.body)
+            // else block for seeker register
+            // order the requested data according to database
+            orderedData = Extractdata.SeekerSignUp({ ...req.body })
+            // Perform Validations
+            if (VALID_MODE == 'true') {
+                // perform validations
+                var { error } = JoiValidation.signupSeeker(orderedData.orderedData)
+            }
+            else {
+                // dont perform validations
+                error = null
+            }
         }
-
         if (error) {
-            next(error.message)
+            next(error)
         }
-
         else {
-            const { firstName, lastName, email, password } = req.body
+            const { firstName, lastName, email, password, repeatPassword, position } = req.body
             // first check whether a user is registered with this email
             const user = await User.findOne({ where: { email: email } });
-
             if (user === null) {
                 // insert into database
                 User.create({
                     first_name: firstName,
                     last_name: lastName,
                     email: email,
-                    password: password
+                    password: password,
+                    repeat_password: repeatPassword,
+                    position: position
                 }).then(response => {
                     if (registerType == 'recruiter') {
                         console.log(orderedData)
@@ -57,7 +74,6 @@ const registercontroller = async (req, res, next) => {
             }
         }
     }
-
     catch (error) {
         res.json({ error: error.message })
     }
@@ -70,7 +86,6 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + path.extname(file.originalname))
     }
 })
-
 const imageUpload = multer({
     storage: storage,
     limits: { fileSize: '1000000' },
@@ -78,13 +93,10 @@ const imageUpload = multer({
         const fileTypes = /jpeg|jpg|png|gif/
         const mimeType = fileTypes.test(file.mimetype)
         const extname = fileTypes.test(path.extname(file.originalname))
-
         if (mimeType && extname) {
             return cb(null, true)
         }
         cb('Give proper files formate to upload')
     }
 }).single('image')
-
-
 export { registercontroller, imageUpload }
