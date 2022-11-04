@@ -1,9 +1,10 @@
 import CustomErrorHandler from "../../services/CustomErrorHandler.js"
-// const jwt_service = require('../../services/JwtService')
-// const { SECRET_KEY } = require('../../config/index')
-// const User = require('../../models/Users')
+import jwt_service from '../../services/JwtService.js'
+import User from '../../models/User.js'
+import { JWT_SECRET } from "../../config/index.js"
+import Company from "../../models/CompanyProfile/Company.js"
+
 const auth = async (req, res, next) => {
-    console.log(req.headers)
     let authHeader = req.headers.accesstoken;
     console.log("authheader:" + authHeader)
     if (!authHeader) {
@@ -11,8 +12,9 @@ const auth = async (req, res, next) => {
     }
     else {
         try {
-            const { id } = jwt_service.verifytoken(authHeader, SECRET_KEY)
-            const user = await User.findOne({ where: { id: id }, attributes: { exclude: ['password'] } });
+            const { id } = jwt_service.verifytoken(authHeader, JWT_SECRET)
+
+            const user = await User.findOne({ where: { id: id }, attributes: { exclude: ['password'] }, include: Company });
             if (user === null) {
                 return next(CustomErrorHandler.notFound("User Not Found"))
             } else {

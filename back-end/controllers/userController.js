@@ -1,12 +1,17 @@
 import CustomErrorHandler from '../services/CustomErrorHandler.js'
 import { JoiValidation } from '../validators/JoiValidation.js'
 import { VALID_MODE } from '../config/index.js'
-import md5 from 'md5'
 import User from '../models/User.js'
 import Extractdata from '../services/ExtractData.js'
 import errorHandler from '../middlewares/errorHandler.js'
 import multer from 'multer'
 import path from 'path'
+import Company from '../models/CompanyProfile/Company.js'
+import bcrypt from 'bcrypt'
+import { REFRESH_SECRET, JWT_SECRET } from '../config/index.js'
+import RefreshToken from '../models/refreshToken.js'
+import { decryptPassword } from '../services/Main.js'
+import jwt_service from '../services/JwtService.js'
 // const User = require('../models/Users')
 const registercontroller = async (req, res, next) => {
     // extract error from validation schema
@@ -50,19 +55,20 @@ const registercontroller = async (req, res, next) => {
             // first check whether a user is registered with this email
             const user = await User.findOne({ where: { email: email } });
             if (user === null) {
+                const hash = await decryptPassword(password)
                 // insert into database
                 User.create({
                     first_name: firstName,
                     last_name: lastName,
                     email: email,
-                    password: password,
+                    password: hash,
                     repeat_password: repeatPassword,
                     position: position
                 }).then(response => {
                     if (registerType == 'recruiter') {
-                        console.log(orderedData)
                         // insertion for employer start
-                        response.createCompany(orderedData.orderedData)
+                        // Company.createUser(orderedData.orderedData)
+                        response.createCompany({ ...orderedData.orderedData, UserId: response.id })
                         // insertion for employer end
                     }
                     res.json({ message: "account created successfully" })
@@ -99,4 +105,42 @@ const imageUpload = multer({
         cb('Give proper files formate to upload')
     }
 }).single('image')
-export { registercontroller, imageUpload }
+
+// SignIn Controller
+const signincontroller = async (req, res, next) => {
+    // first get request body
+    const { email, password } = req.body
+    const { error } = JoiValidation.signin(req.body)
+    if (error) {
+        next(error)
+    }
+    else {
+        //   check in database
+        const user = await User.findOne({ where: { email: email } });
+        if (user === null) {
+            return next(CustomErrorHandler.notExist("Account Not Found by This Email"))
+        } else {
+            bcrypt.compare(password, user.password, function (err, result) {
+                if (result) {
+                    // correct Credentials
+                    const accesstoken = jwt_service.sign({ id: user.id }, '1y', JWT_SECRET)
+                    const refresh_token = jwt_service.sign({ id: user.id }, '1y', REFRESH_SECRET);
+                    RefreshToken.create({ token: refresh_token }).then(res => {
+                    }).catch(error => {
+                        return next(new Error("Problem occured in database"))
+                    })
+                    res.json({ accesstoken, refresh_token })
+                }
+                else {
+                    // wrong Credentials
+                    return next(CustomErrorHandler.wrongCredentials())
+                }
+            });
+        }
+    }
+
+}
+const ProfileController = (req, res, next) => {
+    res.json(req.user)
+}
+export { registercontroller, imageUpload, signincontroller, ProfileController }

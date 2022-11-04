@@ -33,5 +33,21 @@ class Extractdata {
         }
         return new Extractdata(data)
     }
+    static JobPost = (body) => {
+        const data = {
+            job_title: body.job_title,
+            job_description: body.job_description,
+            last_name: body.job_location,
+            start_salary: body.start_salary,
+            end_salary: body.end_salary,
+            start_time: body.start_time,
+            end_time: body.end_time,
+            gender: body.gender,
+            valid_upto: body.valid_upto,
+            is_active: body.is_active,
+
+        }
+        return new Extractdata(data)
+    }
 }
 export default Extractdata

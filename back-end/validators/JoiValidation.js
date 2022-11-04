@@ -138,5 +138,19 @@ class JoiValidation {
         else
             return new JoiValidation(null)
     }
+    static JobPost(body) {
+        const JobValidationSchema = joi.object({
+            title: joi.string()
+                .required(),
+
+        })
+        const { error } = JobValidationSchema.validate(body)
+        if (error)
+            return new JoiValidation(error)
+        else
+            return new JoiValidation(null)
+    }
+
+
 }
 export { JoiValidation }
